@@ -36,7 +36,18 @@ printFlush(paste("Removing samples:", paste(rownames(datExpr0)[!gsg$goodSamples]
 datExpr0 = datExpr0[gsg$goodSamples, gsg$goodGenes]
 }
 
-
+#Clustering the samples...
+sampleTree = hclust(dist(datExpr0), method = "average");
+sizeGrWindow(12,9)
+pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
+par(cex = 0.6);
+par(mar = c(0,4,2,0))
+plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
+cex.axis = 1.5, cex.main = 2)
+#Add a linha cutoff para identificar e excluir os outliers
+abline(h = 15, col = "red") 
+#Salvar o plot no formato pdf
+dev.off()
 
 
 
