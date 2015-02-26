@@ -49,6 +49,16 @@ abline(h = 15, col = "red")
 #Salvar o plot no formato pdf
 dev.off()
 
+# Determine cluster under the line
+clust = cutreeStatic(sampleTree, cutHeight = 15, minSize = 10)              #Em 'cutHeight' colocar o mesmo valor de h
+table(clust)
+# clust 1 contains the samples we want to keep.
+keepSamples = (clust==1)
+datExpr = datExpr0[keepSamples, ]
+nGenes = ncol(datExpr)
+nSamples = nrow(datExpr)
+
+
 
 
 
