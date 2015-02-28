@@ -12,6 +12,9 @@ setwd("/home/user/Documents/dir")
 getwd()
 options(stringsAsFactors = FALSE)
 
+#########################################################
+1. DATA INPUT AND CLEANING
+
 rpkm=read.csv("file.csv",header=TRUE)
 dim(rpkm)
 names()
@@ -28,13 +31,13 @@ gsg$allOK
 
 #Se apareceu TRUE, não há outliers na amostra. Caso contrário, rodar...
 if (!gsg$allOK)
-{
-if (sum(!gsg$goodGenes)>0)
-printFlush(paste("Removing genes:", paste(names(datExpr0)[!gsg$goodGenes], collapse = ", ")))
-if (sum(!gsg$goodSamples)>0)
-printFlush(paste("Removing samples:", paste(rownames(datExpr0)[!gsg$goodSamples], collapse = ", ")))
-datExpr0 = datExpr0[gsg$goodSamples, gsg$goodGenes]
-}
+    {
+    if (sum(!gsg$goodGenes)>0)
+    printFlush(paste("Removing genes:", paste(names(datExpr0)[!gsg$goodGenes], collapse = ", ")))
+    if (sum(!gsg$goodSamples)>0)
+    printFlush(paste("Removing samples:", paste(rownames(datExpr0)[!gsg$goodSamples], collapse = ", ")))
+    datExpr0 = datExpr0[gsg$goodSamples, gsg$goodGenes]
+    }
 
 #Clustering the samples...
 sampleTree = hclust(dist(datExpr0), method = "average");
@@ -43,7 +46,7 @@ pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
-cex.axis = 1.5, cex.main = 2)
+    cex.axis = 1.5, cex.main = 2)
 #Add a linha cutoff para identificar e excluir os outliers
 abline(h = 15, col = "red") 
 #Salvar o plot no formato pdf
@@ -57,6 +60,107 @@ keepSamples = (clust==1)
 datExpr = datExpr0[keepSamples, ]
 nGenes = ncol(datExpr)
 nSamples = nrow(datExpr)
+
+#Save the objects and the file to a .RData format
+save(rpkm,datExpr0, datExpr, gsg, clust, nGenes, nSamples,
+keepSamples, sampleTree,file="dir/input.RData")
+
+####################################################
+2.STEP-BY-STEP NETWORK CONSTRUCTION
+
+lnames=load("dir/input.RData")
+lnames
+
+#Choosing a soft-threshold to fit a scale-free topology to the network
+powers=c(c(1:10)),seq(from=12,to=20,by=2))
+sft=pickSoftThreshold(datExpr,dataIsExpr=TRUE,
+    powerVector=powers,corFnc = cor,corOptions = list(use = 'p'),
+    networkType = "unsigned")
+#Plotting the results
+sizeGrWindow(9,5)
+#Save the plot
+pdf(file="dir/scaleindependence.pdf",w=9,h=5)
+par(mfrow=c(1,2))
+cex1=0.9
+plot(sft$fitIndices[,1],-sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+    xlab="Soft Threshold (power)",
+    ylab="Scale Free Topology Model Fit,signed R²",
+    type="n",main=paste("Scale independence"))
+text(sft$fitIndices[,1],-sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+    labels=powers,cex=cex1,col="red")
+abline(h=0.8,col="red")
+
+plot(sft$fitIndices[,1],sft$fitIndices[,5],
+    xlab="Soft Threshold (power)",
+    ylab="Mean Connectivity",type="n",
+    main=paste("Mean connectivity"))
+text(sft$fitIndices[,1],sft$fitIndices[,5],labels=powers,
+    cex=cex1,col="red")
+dev.off()
+
+#After chosing the power value, calculate the co-expression similarity and ajacency
+softPower=10
+adjacency=adjacency=adjacency(datExpr,power=softPower,type="unsigned")
+#Clustering using TOM
+TOM=TOMsimilarity(adjacency)
+dissTOM=1-TOM
+geneTree=flashClust(as.dist(dissTOM),method="average")
+sizeGrWindow(12,9)
+pdf(file="dir/geneclustering.pdf")
+plot(geneTree,xlab="",sub="",
+    main="Gene clustering on TOM-based dissimilarity",
+    labels=FALSE,hang=0.04)
+minModuleSize=30
+dynamicMods=cutreeDynamic(dendro=geneTree,method="tree", distM=dissTOM,
+    deepSplit=2,pamRespectsDendro=FALSE,
+    minClusterSize = minModuleSize)
+table(dynamicMods)
+dynamicColors=labels2colors(dynamicMods)
+table(dynamicColors)
+sizeGrWindow(8,6)
+pdf(file="dir/dendogram_dynamictree.pdf",w=8,h=6)
+plotDendroAndColors(geneTree,dynamicColors,
+    "Dynamic Tree Cut",dendroLabels=FALSE,
+    hang=0.03,addGuide=TRUE,guideHang=0.05,
+    main="Gene dendrogram and module colors")
+dev.off()
+
+#Merging of modules whose expression profiles are very similar
+MEList=moduleEigengenes(datExpr,colors=dynamicColors)
+MEs=MEList$eigengenes
+MEDiss=1-cor(MEs)
+METree=flashClust(as.dist(MEDiss),method="average")
+sizeGrWindow(7,6)
+pdf(file="dir/clusteringeigengenes.pdf",w=7,h=6)
+plot(METree,main="CLustering of module eigengenes",
+    xlab="",sub="")
+MEDissThres=0.25
+abline(h=MEDissThres,col="red")
+dev.off()
+
+merge=mergeCloseModules(datExpr,dynamicColors,
+    cutHeight=MEDissThres,verbose=3)
+mergedColors=merge$colors
+mergedMEs=merge$newMEs
+sizeGrWindow(12,9)
+pdf(file="dir/dendrogram_merged.pdf",w=12,h=9)
+plotDendroAndColors(geneTree, cbind(dynamicColors,mergedColors),
+    c("Dynamic Tree Cut","Merged dynamic"),
+    dendroLabels=FALSE,hang=0.03,
+    addGuide=TRUE,guideHang=0.05)
+dev.off()
+
+moduleColors=mergedColors
+colorOrder=c("grey",standardColors(50))
+moduleLabels=match(moduleColors,colorOder)-1
+MEs=mergedMEs
+save(rpkm,datExpr0,datExpr,powers,sft,adjacency,TOM,dissTOM,
+    geneTree,dynamicMods,dynamicColors,MEList,
+    MEs,METree,merge,mergedColors,mergedMEs,
+    moduleColors,colorOrder,moduleLabels,
+    file="dir/networkconstruction_stepbystep.pdf")
+
+
 
 
 
