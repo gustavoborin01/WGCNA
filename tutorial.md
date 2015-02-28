@@ -160,6 +160,23 @@ save(rpkm,datExpr0,datExpr,powers,sft,adjacency,TOM,dissTOM,
     moduleColors,colorOrder,moduleLabels,
     file="dir/networkconstruction_stepbystep.pdf")
 
+#Networkheatmap
+#Generating the heatmap plot for all genes take a substantial amount of time.So because this 
+it was necessary to restrict the number of genes
+nSelect=1000
+set.seed(10)
+select=sample(nGenes,size=nSelect)
+selectTOM=dissTOM[select,select]
+selectTree=flashClust(as.dist(selectTOM),method="average")
+selectColors=moduleColors[select]
+sizeGrWindow(9,9)
+pdf(file="dir/heatmap.pdf",w=9,h=9)
+plotDIss=selectTOM^7
+diag(plotDiss)=NA
+TOMplot(plotDiss,selecTree,selectColors,
+    main="Network heatmap plot, selected genes")
+dev.off()
+
 
 
 
