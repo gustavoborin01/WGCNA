@@ -30,7 +30,7 @@ rownames(datExpr0) = names(rpkm)[-1]
 gsg = goodSamplesGenes(datExpr0, verbose = 3)
 gsg$allOK
 
-#Se apareceu TRUE, não há outliers na amostra. Caso contrário, rodar...
+# Se apareceu TRUE, não há outliers na amostra. Caso contrário, rodar...
 if (!gsg$allOK)
     {
     if (sum(!gsg$goodGenes)>0)
@@ -40,7 +40,7 @@ if (!gsg$allOK)
     datExpr0 = datExpr0[gsg$goodSamples, gsg$goodGenes]
     }
 
-#Clustering the samples...
+# Clustering the samples...
 sampleTree = hclust(dist(datExpr0), method = "average");
 sizeGrWindow(12,9)
 pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
@@ -48,13 +48,13 @@ par(cex = 0.6);
 par(mar = c(0,4,2,0))
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
     cex.axis = 1.5, cex.main = 2)
-#Add a linha cutoff para identificar e excluir os outliers
+# Add a linha cutoff para identificar e excluir os outliers
 abline(h = 15, col = "red") 
-#Salvar o plot no formato pdf
+# Salvar o plot no formato pdf
 dev.off()
 
 # Determine cluster under the line
-clust = cutreeStatic(sampleTree, cutHeight = 15, minSize = 10)              #Em 'cutHeight' colocar o mesmo valor de h
+clust = cutreeStatic(sampleTree, ght = 15, minSize = 10)              #Em 'ght' colocar o mesmo valor de h
 table(clust)
 # clust 1 contains the samples we want to keep.
 keepSamples = (clust==1)
@@ -62,7 +62,7 @@ datExpr = datExpr0[keepSamples, ]
 nGenes = ncol(datExpr)
 nSamples = nrow(datExpr)
 
-#Save the objects and the file to a .RData format
+# Save the objects and the file to a .RData format
 save(rpkm,datExpr0, datExpr, gsg, clust, nGenes, nSamples,
 keepSamples, sampleTree,file="dir/input.RData")
 
@@ -72,14 +72,14 @@ keepSamples, sampleTree,file="dir/input.RData")
 lnames=load("dir/input.RData")
 lnames
 
-#Choosing a soft-threshold to fit a scale-free topology to the network
+# Choosing a soft-threshold to fit a scale-free topology to the network
 powers=c(c(1:10)),seq(from=12,to=20,by=2))
 sft=pickSoftThreshold(datExpr,dataIsExpr=TRUE,
     powerVector=powers,corFnc = cor,corOptions = list(use = 'p'),
     networkType = "unsigned")
-#Plotting the results
+# Plotting the results
 sizeGrWindow(9,5)
-#Save the plot
+# Save the plot
 pdf(file="dir/scaleindependence.pdf",w=9,h=5)
 par(mfrow=c(1,2))
 cex1=0.9
@@ -99,10 +99,10 @@ text(sft$fitIndices[,1],sft$fitIndices[,5],labels=powers,
     cex=cex1,col="red")
 dev.off()
 
-#After chosing the power value, calculate the co-expression similarity and ajacency
+# After chosing the power value, calculate the co-expression similarity and ajacency
 softPower=10
-adjacency=adjacency=adjacency(datExpr,power=softPower,type="unsigned")
-#Clustering using TOM
+adjacency=adjacency(datExpr,power=softPower,type="unsigned")
+# Clustering using TOM
 TOM=TOMsimilarity(adjacency)
 dissTOM=1-TOM
 geneTree=flashClust(as.dist(dissTOM),method="average")
@@ -128,15 +128,18 @@ plotDendroAndColors(geneTree,dynamicColors,
     main="Gene dendrogram and module colors")
 dev.off()
 
-#Merging of modules whose expression profiles are very similar
+# Merging of modules whose expression profiles are very similar
 MEList=moduleEigengenes(datExpr,colors=dynamicColors)
 MEs=MEList$eigengenes
+# Calculate dissimilarity of module eigengenes
 MEDiss=1-cor(MEs)
+# Cluster module eigengenes
 METree=flashClust(as.dist(MEDiss),method="average")
 sizeGrWindow(7,6)
 pdf(file="dir/clusteringeigengenes.pdf",w=7,h=6)
 plot(METree,main="CLustering of module eigengenes",
     xlab="",sub="")
+# A height cut of 0.25 correspond to correlation of 0.75    
 MEDissThres=0.25
 abline(h=MEDissThres,col="red")
 dev.off()
@@ -163,9 +166,9 @@ save(rpkm,datExpr0,datExpr,powers,sft,adjacency,TOM,dissTOM,
     moduleColors,colorOrder,moduleLabels,
     file="dir/networkconstruction_stepbystep.pdf")
 
-#Networkheatmap construction
-#Generating the heatmap plot for all genes take a substantial amount of time.So because this 
-it was necessary to restrict the number of genes
+# Networkheatmap construction
+# Generating the heatmap plot for all genes take a substantial amount of time.So because this 
+# it was necessary to restrict the number of genes
 nSelect=1000
 set.seed(10)
 select=sample(nGenes,size=nSelect)
@@ -180,7 +183,7 @@ TOMplot(plotDiss,selecTree,selectColors,
     main="Network heatmap plot, selected genes")
 dev.off()
 
-#Export the network into an edge list file VisANT can read
+# Export the network into an edge list file VisANT can read
 module="antiquewhite2"
 probes=names(datExpr)
 inModule=(moduleColors==module)
