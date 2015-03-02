@@ -160,7 +160,7 @@ save(rpkm,datExpr0,datExpr,powers,sft,adjacency,TOM,dissTOM,
     moduleColors,colorOrder,moduleLabels,
     file="dir/networkconstruction_stepbystep.pdf")
 
-#Networkheatmap
+#Networkheatmap construction
 #Generating the heatmap plot for all genes take a substantial amount of time.So because this 
 it was necessary to restrict the number of genes
 nSelect=1000
@@ -177,6 +177,15 @@ TOMplot(plotDiss,selecTree,selectColors,
     main="Network heatmap plot, selected genes")
 dev.off()
 
+#Export the network into an edge list file VisANT can read
+module="antiquewhite2"
+probes=names(datExpr)
+inModule=(moduleColors==module)
+modProbes=probes[inModule]
+modTOM=TOM[inModule,inModule]
+dimnames(modTOM)=list(modProbes,modProbes)
+vis=exportNetworkToVisANT(modTOM,file=paste("VisANTInput-",module,
+".txt",sep=""),weighted=TRUE,threshold=0.2)
 
 
 
