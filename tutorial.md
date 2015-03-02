@@ -116,8 +116,10 @@ dynamicMods=cutreeDynamic(dendro=geneTree,method="tree", distM=dissTOM,
     deepSplit=2,pamRespectsDendro=FALSE,
     minClusterSize = minModuleSize)
 table(dynamicMods)
+write.csv(dynamicMods,file="dynamicMods.csv")
 dynamicColors=labels2colors(dynamicMods)
 table(dynamicColors)
+write.csv(dynamicColors,file="dynamicColors.csv")
 sizeGrWindow(8,6)
 pdf(file="dir/dendogram_dynamictree.pdf",w=8,h=6)
 plotDendroAndColors(geneTree,dynamicColors,
