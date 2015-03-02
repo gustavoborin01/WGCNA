@@ -1,7 +1,8 @@
 # WGCNA (26/02/2015)
 # Contrução da rede de co-regulação com os dados de RNASeq
-#Lembrar de update os pacotes e, se necessário, até o R
-#Instalando o pacote WGCNA
+# Lembrar de update os pacotes e, se necessário, até o R
+# Lembrar de salvar as tabelas no formato .csv (write.csv)
+# Instalando o pacote WGCNA
 
 source("http://bioconductor.org/biocLite.R")
 biocLite("impute")
