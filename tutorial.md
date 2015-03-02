@@ -186,9 +186,9 @@ modTOM=TOM[inModule,inModule]
 dimnames(modTOM)=list(modProbes,modProbes)
 vis=exportNetworkToVisANT(modTOM,file=paste("VisANTInput-",module,
 ".txt",sep=""),weighted=TRUE,threshold=0.2)
-
-
-
+save(nSelect,select,selectTOM,selectTree,
+    selectColors,plotDiss,file="heatmap_exportingdata.RData")
+    
 
 
 
